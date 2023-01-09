@@ -62,7 +62,11 @@ temperature = path_summary_row[-1]
 
 restart_steps = []
 
-for i in range(int(steps_per_test), int(grad_array.shape[0]), int(steps_per_test)):
+steps = list(range(int(steps_per_test), int(grad_array.shape[0]), int(steps_per_test)))
+# steps.append(grad_array.shape[0])
+
+
+for i in steps:
     
     texture_age = (i * args.time_step)/1000
     step = int(grad_array.shape[0]) - i
