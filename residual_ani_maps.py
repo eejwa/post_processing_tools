@@ -8,11 +8,22 @@ import matplotlib.pyplot as plt
 import cartopy
 import cartopy.crs as ccrs 
 from matplotlib.backends.backend_pdf import PdfPages
+import argparse
+import matplotlib
 
+parser = argparse.ArgumentParser()
+parser.add_argument('-cij1', '--cijfile1', type=str, help='absolute path to cij_summary output file containing all anisotropy points of interest.')
+parser.add_argument('-cij2', '--cijfile2', type=str, help='absolute path to cij_summary output file containing all anisotropy points of interest.')
+parser.add_argument('-s', '--slip_system', type=str, help='slip system used.')
+parser.add_argument('-nside', '--nside', type=int, required=False, help='healpix nside value for resolution')
+parser.add_argument('-r', '--rad', required=False, help='Radius to plot at')
+parser.add_argument('-o', '--outfile', type=str, help='outfile name. must end in pdf', required=True)
 
-slip_system='010'
-rad = 3530
-nside = 24
+args = parser.parse_args()
+
+slip_system=args.slip_system
+rad = args.rad
+nside = args.nside
 
 xsize = 2000
 ysize = xsize / 2.
@@ -35,26 +46,33 @@ NPIX = hp.nside2npix(nside)
 colats_hp, lons_hp = np.degrees(hp.pix2ang(nside=nside, ipix=np.arange(NPIX)))
 lats_hp = 90 - colats_hp
 
-dep_file = f"/Users/earjwara/work/anisotropy_flow/model01/time_dep/1Ma_test/cij_summary_{slip_system}.txt"
-indep_file = f"/Users/earjwara/work/anisotropy_flow/model01/time_indep/cij_summary_{slip_system}.txt"
+# dep_file = f"/Users/earjwara/work/anisotropy_flow/model01/time_dep/1Ma_test/cij_summary_{slip_system}.txt"
+# indep_file = f"/Users/earjwara/work/anisotropy_flow/model01/time_indep/cij_summary_{slip_system}.txt"
 
-path_file_dep = '/Users/earjwara/work/anisotropy_flow/model01/time_dep/1Ma_test/path_summary.txt'
-path_file_indep = '/Users/earjwara/work/anisotropy_flow/model01/time_indep/path_summary.txt'
+# path_file_dep = '/Users/earjwara/work/anisotropy_flow/model01/time_dep/1Ma_test/path_summary.txt'
+# path_file_indep = '/Users/earjwara/work/anisotropy_flow/model01/time_indep/path_summary.txt'
+
+# dep_file = f"/Users/earjwara/work/anisotropy_flow/model01/time_indep/topotaxy/summary_both.txt"
+# indep_file = f"/Users/earjwara/work/anisotropy_flow/model01/time_indep/no_topo/summary_001_1-10.txt"
+
+# path_file_dep = '/Users/earjwara/work/anisotropy_flow/model01/time_dep/1Ma_test/path_summary.txt'
+# path_file_indep = '/Users/earjwara/work/anisotropy_flow/model01/time_indep/path_summary.txt'
 
 
-data_array_timedep = np.loadtxt(dep_file)
-data_array_timeindep = np.loadtxt(indep_file)
 
-path_array_timedep = np.loadtxt(path_file_dep)
-path_array_timeindep = np.loadtxt(path_file_indep)
+data_array_timedep = np.loadtxt(args.cijfile1, skiprows=1)
+data_array_timeindep = np.loadtxt(args.cijfile2, skiprows=1)
+
+# path_array_timedep = np.loadtxt(path_file_dep)
+# path_array_timeindep = np.loadtxt(path_file_indep)
 
 data_array_timedep = data_array_timedep[np.lexsort((data_array_timedep[:, 1], data_array_timedep[:, 0], data_array_timedep[:, 2]))]
 data_array_timeindep = data_array_timeindep[np.lexsort((data_array_timeindep[:, 1], data_array_timeindep[:, 0], data_array_timeindep[:, 2]))]
-path_array_timedep = path_array_timedep[np.lexsort((path_array_timedep[:, 1], path_array_timedep[:, 0], path_array_timedep[:, 2]))]
-path_array_timeindep = path_array_timeindep[np.lexsort((path_array_timeindep[:, 1], path_array_timeindep[:, 0], path_array_timeindep[:, 2]))]
+# path_array_timedep = path_array_timedep[np.lexsort((path_array_timedep[:, 1], path_array_timedep[:, 0], path_array_timedep[:, 2]))]
+# path_array_timeindep = path_array_timeindep[np.lexsort((path_array_timeindep[:, 1], path_array_timeindep[:, 0], path_array_timeindep[:, 2]))]
 
 print(data_array_timedep)
-print(path_array_timedep)
+# print(path_array_timedep)
 
 
 R, lat, lon, P, T, xi, phi_ani, eta = data_array_timedep[:,0], data_array_timedep[:,1], data_array_timedep[:,2], data_array_timedep[:,3], data_array_timedep[:,4], data_array_timedep[:,5], data_array_timedep[:,6], data_array_timedep[:,7]
@@ -73,17 +91,6 @@ lat_r_indep = lat_indep[data_array_timeindep[:,0] == int(rad)]
 lon_r = lon[data_array_timedep[:,0] == int(rad)]
 lon_r_indep = lon_indep[data_array_timeindep[:,0] == int(rad)]
 
-pathlen_dep = path_array_timedep[path_array_timedep[:,0] == int(rad)][:,3]
-pathlen_indep = path_array_timeindep[path_array_timeindep[:,0] == int(rad)][:,3]
-
-tort_dep = path_array_timedep[path_array_timedep[:,0] == int(rad)][:,4]
-tort_indep = path_array_timeindep[path_array_timeindep[:,0] == int(rad)][:,4]
-
-mean_vel_dep = path_array_timedep[path_array_timedep[:,0] == int(rad)][:,7]
-mean_vel_indep = path_array_timeindep[path_array_timeindep[:,0] == int(rad)][:,7]
-
-
-
 xi_r = xi[data_array_timedep[:,0] == int(rad)]
 phi_r = phi_ani[data_array_timedep[:,0] == int(rad)]
 eta_r = eta[data_array_timedep[:,0] == int(rad)]
@@ -92,66 +99,46 @@ xi_r_indep = xi_indep[data_array_timeindep[:,0] == int(rad)]
 phi_r_indep = phi_ani_indep[data_array_timeindep[:,0] == int(rad)]
 eta_r_indep = eta_indep[data_array_timeindep[:,0] == int(rad)]
 
-# print(np.unique(lon_r, return_counts=True))
-# print(np.unique(lon_r_indep, return_counts=True))
-
-# xi_r_use = []
-# phi_r_use = []
-# eta_r_use = []
-
-# xi_r_use_indep = []
-# phi_r_use_indep = []
-# eta_r_use_indep = []
-
-
-# for i,lo in enumerate(lon_r):
-#     if np.round(lo, 4) in lons_hp or np.round(lat_r[i], 4) in lats_hp:
-#         print(lo, lat_r[i])
-#         xi_r_use.append(xi_r[i])
-#         phi_r_use.append(phi_r[i])
-#         eta_r_use.append(eta_r[i])
-
-# for j,lo in enumerate(lon_r_indep):   
-#     if np.round(lon_r_indep[j], 4) in lons_hp or np.round(lat_r_indep[j], 4) in lats_hp:
-#         xi_r_use_indep.append(xi_r_indep[j])
-#         phi_r_use_indep.append(phi_r_indep[j])
-#         eta_r_use_indep.append(eta_r_indep[j])
-
-# print(len(xi_r_use))
-
 
 xi_diff = np.subtract(xi_r, xi_r_indep)
 phi_diff = np.subtract(phi_r, phi_r_indep)
 eta_diff = np.subtract(eta_r, eta_r_indep)
-
-pathlen_diff = np.subtract(pathlen_dep, pathlen_indep)
-tort_diff = np.subtract(tort_dep, tort_indep)
 
 # initialise maps
 m_xi = np.zeros(hp.nside2npix(nside))
 m_phi = np.zeros(hp.nside2npix(nside))
 m_eta = np.zeros(hp.nside2npix(nside))
 
-m_pathlen = np.zeros(hp.nside2npix(nside))
-m_tort = np.zeros(hp.nside2npix(nside))
+m_xi_indep = np.zeros(hp.nside2npix(nside))
+m_xi_dep = np.zeros(hp.nside2npix(nside))
+m_xi_indep[pixel_indices] = xi_r_indep
+m_xi_dep[pixel_indices] = xi_r
+
+m_phi_indep = np.zeros(hp.nside2npix(nside))
+m_phi_dep = np.zeros(hp.nside2npix(nside))
+m_phi_indep[pixel_indices] = phi_r_indep
+m_phi_dep[pixel_indices] = phi_r
+
+
+
 
 m_xi[pixel_indices] = xi_diff
 m_phi[pixel_indices] = phi_diff
 m_eta[pixel_indices] = eta_diff
 
-m_pathlen[pixel_indices] = pathlen_diff
-m_tort[pixel_indices] = tort_diff
-
-
 grid_map_xi = m_xi[grid_pix]
+grid_map_xi_indep = m_xi_indep[grid_pix]
+grid_map_xi_dep = m_xi_dep[grid_pix]
+
 grid_map_phi = m_phi[grid_pix]
+grid_map_phi_indep = m_phi_indep[grid_pix]
+grid_map_phi_dep = m_phi_dep[grid_pix]
+
 grid_map_eta = m_eta[grid_pix]
 
-grid_map_pathlen = m_pathlen[grid_pix]
-grid_map_tort = m_tort[grid_pix]
 
 # plot all the maps 
-with PdfPages(f"residual_maps_{slip_system}.pdf") as pdf:
+with PdfPages(args.outfile) as pdf:
 
     for grid in [[grid_map_xi, 'xi'], [grid_map_phi, 'phi'], [grid_map_eta, 'eta']]:
             print(grid[1])
@@ -187,54 +174,157 @@ with PdfPages(f"residual_maps_{slip_system}.pdf") as pdf:
             pdf.savefig()
             plt.close()
 
-    print('pathlen difference')
-    fig = plt.figure(figsize=(13,6))
-    ax = fig.add_subplot(111,projection=ccrs.Robinson(central_longitude=120))
-    # flip longitude to the astro convention
-    image = ax.pcolormesh(longitude, latitude, grid_map_pathlen,
-                           rasterized=True,
-                           transform=ccrs.PlateCarree(), 
-                           vmin = grid_map_pathlen.min(), vmax = grid_map_pathlen.max(),
-                           cmap='seismic')
-  
-    plt.colorbar(image, label = "$\delta path length (km)$", ax=ax)
+# plot a difference map in the rows
 
-    ax.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+cmap = matplotlib.cm.get_cmap('seismic')
+cmap.set_bad(color='dimgray')
 
-    gl = ax.gridlines(draw_labels=True, linewidth=0)
+fig = plt.figure(figsize=(10,13))
+ax1 = fig.add_subplot(311,projection=ccrs.Robinson(central_longitude=120))
+# flip longitude to the astro convention
 
-    gl.top_label = True
-    gl.right_label = True
-    gl.bottom_label = True
-    gl.left_label = True
+# grid_map_xi_indep = np.ma.masked_invalid(grid_map_xi_indep)
+# grid_map_xi_indep.set_cmap(cmap)
+# lc.set_norm(norm)
+np.ma.masked_invalid(np.atleast_2d(grid_map_xi_indep))
 
-    ax.set_title(f"Path length difference between time dep and indep | Radius {rad} km")
+print(grid_map_xi_indep)
 
-    pdf.savefig()
-    plt.close()
+image = ax1.pcolormesh(longitude, latitude, grid_map_xi_indep,
+                      rasterized=True,
+                      transform=ccrs.PlateCarree(), vmin=0.8, vmax=1.2,
+                      cmap=cmap)
 
-    print('tort difference')
-    fig = plt.figure(figsize=(13,6))
-    ax = fig.add_subplot(111,projection=ccrs.Robinson(central_longitude=120))
-    # flip longitude to the astro convention
-    image = plt.pcolormesh(longitude, latitude, grid_map_tort,
-                           rasterized=True,
-                           transform=ccrs.PlateCarree(),
-                           vmin = grid_map_tort.min(), vmax = grid_map_tort.max(),
-                           cmap='inferno')
-  
-    plt.colorbar(image, label = "$\delta path tort (km)$", ax=ax)
+image = ax1.pcolormesh(longitude, latitude, grid_map_xi_indep,
+                      rasterized=True,
+                      transform=ccrs.PlateCarree(), vmin=0.8, vmax=1.2,
+                      cmap='seismic')
 
-    ax.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+ax1.set_title(f"$\\xi$ time-constant flowfield")
+plt.colorbar(image, label = "$\\xi$", ax=ax1)
 
-    gl = ax.gridlines(draw_labels=True, linewidth=0)
 
-    gl.top_label = True
-    gl.right_label = True
-    gl.bottom_label = True
-    gl.left_label = True
+ax2 = fig.add_subplot(312,projection=ccrs.Robinson(central_longitude=120))
+# flip longitude to the astro convention
+image = ax2.pcolormesh(longitude, latitude, grid_map_xi_dep,
+                      rasterized=True,
+                      transform=ccrs.PlateCarree(), vmin=0.8, vmax=1.2,
+                      cmap=cmap)
 
-    ax.set_title(f"Path tortuosity difference between time dep and indep | Radius {rad} km")
+image = ax2.pcolormesh(longitude, latitude, grid_map_xi_dep,
+                      rasterized=True,
+                      transform=ccrs.PlateCarree(), vmin=0.8, vmax=1.2,
+                      cmap='seismic')
 
-    pdf.savefig()
-    plt.close()
+ax2.set_title(f"$\\xi$ time-varying flowfield")
+plt.colorbar(image, label = "$\\xi$", ax=ax2)
+
+
+ax3 = fig.add_subplot(313,projection=ccrs.Robinson(central_longitude=120))
+# flip longitude to the astro convention
+image = ax3.pcolormesh(longitude, latitude, grid_map_xi,
+                      rasterized=True,
+                      transform=ccrs.PlateCarree(), vmin=-0.15, vmax=0.15,
+                      cmap=cmap)
+
+image = ax3.pcolormesh(longitude, latitude, grid_map_xi,
+                      rasterized=True,
+                      transform=ccrs.PlateCarree(), vmin=-0.15, vmax=0.15,
+                      cmap='seismic')
+
+ax3.set_title(f"$\delta \ \\xi$")
+plt.colorbar(image, label = "$\delta \ \\xi$", ax=ax3)
+
+ax1.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+gl = ax1.gridlines(draw_labels=True, linewidth=0)
+
+ax2.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+gl = ax2.gridlines(draw_labels=True, linewidth=0)
+
+ax3.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+gl = ax3.gridlines(draw_labels=True, linewidth=0)
+
+
+ax1.text(0.0, 0.925, 'a)', transform=ax1.transAxes,
+        size=25)
+
+ax2.text(0.0, 0.925, 'b)', transform=ax2.transAxes,
+size=25)
+
+ax3.text(0.0, 0.925, 'c)', transform=ax3.transAxes,
+size=25)
+
+
+
+plt.tight_layout(pad = 0.5)
+plt.savefig(f'xi_comparison_{slip_system}.pdf')
+
+fig = plt.figure(figsize=(10,13))
+ax1 = fig.add_subplot(311,projection=ccrs.Robinson(central_longitude=120))
+# flip longitude to the astro convention
+image = ax1.pcolormesh(longitude, latitude, grid_map_phi_indep,
+                      rasterized=True,
+                      transform=ccrs.PlateCarree(), vmin=0.8, vmax=1.2,
+                      cmap=cmap)
+
+image = ax1.pcolormesh(longitude, latitude, grid_map_phi_indep,
+                      rasterized=True,
+                      transform=ccrs.PlateCarree(), vmin=0.8, vmax=1.2,
+                      cmap='seismic')
+
+ax1.set_title(f"$\phi$ time-constant flowfield")
+plt.colorbar(image, label = "$\phi$", ax=ax1)
+
+ax2 = fig.add_subplot(312,projection=ccrs.Robinson(central_longitude=120))
+# flip longitude to the astro convention
+image = ax2.pcolormesh(longitude, latitude, grid_map_phi_dep,
+                      rasterized=True,
+                      transform=ccrs.PlateCarree(), vmin=0.8, vmax=1.2,
+                      cmap=cmap)
+
+image = ax2.pcolormesh(longitude, latitude, grid_map_phi_dep,
+                      rasterized=True,
+                      transform=ccrs.PlateCarree(), vmin=0.8, vmax=1.2,
+                      cmap='seismic')
+
+ax2.set_title(f"$\phi$ time-varying flowfield")
+plt.colorbar(image, label = "$\phi$", ax=ax2)
+
+
+ax3 = fig.add_subplot(313,projection=ccrs.Robinson(central_longitude=120))
+# flip longitude to the astro convention
+image = ax3.pcolormesh(longitude, latitude, grid_map_phi,
+                      rasterized=True,
+                      transform=ccrs.PlateCarree(), vmin=-0.15, vmax=0.15,
+                      cmap=cmap)
+
+
+image = ax3.pcolormesh(longitude, latitude, grid_map_phi,
+                      rasterized=True,
+                      transform=ccrs.PlateCarree(), vmin=-0.15, vmax=0.15,
+                      cmap='seismic')
+
+ax3.set_title(f"$\delta \ \phi$")
+plt.colorbar(image, label = "$\delta \ \phi$", ax=ax3)
+
+ax1.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+gl = ax1.gridlines(draw_labels=True, linewidth=0)
+
+ax2.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+gl = ax2.gridlines(draw_labels=True, linewidth=0)
+
+ax3.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+gl = ax3.gridlines(draw_labels=True, linewidth=0)
+
+ax1.text(0.0, 0.925, 'a)', transform=ax1.transAxes,
+        size=25)
+
+ax2.text(0.0, 0.925, 'b)', transform=ax2.transAxes,
+size=25)
+
+ax3.text(0.0, 0.925, 'c)', transform=ax3.transAxes,
+size=25)
+plt.tight_layout(pad=0.5)
+
+plt.savefig(f'phi_comparison{slip_system}.pdf')
+

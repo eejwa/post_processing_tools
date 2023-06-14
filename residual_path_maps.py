@@ -8,11 +8,21 @@ import matplotlib.pyplot as plt
 import cartopy
 import cartopy.crs as ccrs 
 from matplotlib.backends.backend_pdf import PdfPages
+import matplotlib.colors as colors
+import matplotlib
 
+import argparse
 
-slip_system='100'
-rad = 3481
-nside = 24
+parser = argparse.ArgumentParser()
+parser.add_argument('-pf_dep', '--pathfile_dep', type=str, help='absolute path to path_summary.txt for time dep.')
+parser.add_argument('-pf_indep', '--pathfile_indep', type=str, help='absolute path to path_summary.txt for time indep.')
+parser.add_argument('-nside', '--nside', type=int, required=False, help='healpix nside value for resolution')
+parser.add_argument('-r', '--rad', required=False, help='Radius to plot at')
+
+args = parser.parse_args()
+
+rad = args.rad
+nside = args.nside
 
 xsize = 2000
 ysize = xsize / 2.
@@ -23,6 +33,8 @@ latitude = np.linspace(-90, 90, int(ysize))
 
 PHI, THETA = np.meshgrid(phi, theta)
 grid_pix = hp.ang2pix(nside, THETA, PHI)
+VMIN=0
+VMAX=8000
 
 # sample the flow field at grid points
 
@@ -35,43 +47,35 @@ NPIX = hp.nside2npix(nside)
 colats_hp, lons_hp = np.degrees(hp.pix2ang(nside=nside, ipix=np.arange(NPIX)))
 lats_hp = 90 - colats_hp
 
-dep_file = f"/nfs/a300/eejwa/Anisotropy_Flow/archer2_runs/time_dep_flow/model01/3481_3630_10km/cij_vpsc_all_{slip_system}.txt"
-indep_file = f"/nfs/a300/eejwa/Anisotropy_Flow/archer2_runs/time_indep_flow/model01/3481_3630_10km/cij_vpsc_all_{slip_system}.txt"
-
-path_file_dep = '/nfs/a300/eejwa/Anisotropy_Flow/archer2_runs/time_dep_flow/model01/3481_3630_10km/path_summary.txt'
-path_file_indep = '/nfs/a300/eejwa/Anisotropy_Flow/archer2_runs/time_indep_flow/model01/3481_3630_10km/path_summary.txt'
+path_file_dep = args.pathfile_dep
+path_file_indep = args.pathfile_indep
 
 
-data_array_timedep = np.loadtxt(dep_file)
-data_array_timeindep = np.loadtxt(indep_file)
 
 path_array_timedep = np.loadtxt(path_file_dep)
 path_array_timeindep = np.loadtxt(path_file_indep)
 
-data_array_timedep = data_array_timedep[np.lexsort((data_array_timedep[:, 1], data_array_timedep[:, 0], data_array_timedep[:, 2]))]
-data_array_timeindep = data_array_timeindep[np.lexsort((data_array_timeindep[:, 1], data_array_timeindep[:, 0], data_array_timeindep[:, 2]))]
+print(path_array_timedep.shape)
+print(path_array_timeindep.shape)
 path_array_timedep = path_array_timedep[np.lexsort((path_array_timedep[:, 1], path_array_timedep[:, 0], path_array_timedep[:, 2]))]
 path_array_timeindep = path_array_timeindep[np.lexsort((path_array_timeindep[:, 1], path_array_timeindep[:, 0], path_array_timeindep[:, 2]))]
 
-print(data_array_timedep)
+print(path_array_timedep.shape)
+print(path_array_timeindep.shape)
+
 print(path_array_timedep)
+lat = path_array_timedep[:,1]
+lon = path_array_timedep[:,2]
 
+lats = lat[path_array_timedep[:,0] == int(rad)]
+lons = lon[path_array_timedep[:,0] == int(rad)]
+colat_rad = np.radians(90 - lats)
+lon_rad = np.radians(lons)
 
-R, lat, lon, P, T, xi, phi_ani, eta = data_array_timedep[:,0], data_array_timedep[:,1], data_array_timedep[:,2], data_array_timedep[:,3], data_array_timedep[:,4], data_array_timedep[:,5], data_array_timedep[:,6], data_array_timedep[:,7]
-R_indep, lat_indep, lon_indep, P_indep, T_indep, xi_indep, phi_ani_indep, eta_indep = data_array_timeindep[:,0], data_array_timeindep[:,1], data_array_timeindep[:,2], data_array_timeindep[:,3], data_array_timeindep[:,4], data_array_timeindep[:,5], data_array_timeindep[:,6], data_array_timeindep[:,7]
-
-lats = lat[data_array_timedep[:,0] == int(rad)]
-lons = lon[data_array_timedep[:,0] == int(rad)]
 colat_rad = np.radians(90 - lats)
 lon_rad = np.radians(lons)
 
 pixel_indices = hp.ang2pix(nside, colat_rad, lon_rad)
-
-lat_r = lat[data_array_timedep[:,0] == int(rad)]
-lat_r_indep = lat_indep[data_array_timeindep[:,0] == int(rad)]
-
-lon_r = lon[data_array_timedep[:,0] == int(rad)]
-lon_r_indep = lon_indep[data_array_timeindep[:,0] == int(rad)]
 
 pathlen_dep = path_array_timedep[path_array_timedep[:,0] == int(rad)][:,3]
 pathlen_indep = path_array_timeindep[path_array_timeindep[:,0] == int(rad)][:,3]
@@ -82,15 +86,8 @@ tort_indep = path_array_timeindep[path_array_timeindep[:,0] == int(rad)][:,4]
 mean_vel_dep = path_array_timedep[path_array_timedep[:,0] == int(rad)][:,7]
 mean_vel_indep = path_array_timeindep[path_array_timeindep[:,0] == int(rad)][:,7]
 
-
-
-xi_r = xi[data_array_timedep[:,0] == int(rad)]
-phi_r = phi_ani[data_array_timedep[:,0] == int(rad)]
-eta_r = eta[data_array_timedep[:,0] == int(rad)]
-
-xi_r_indep = xi_indep[data_array_timeindep[:,0] == int(rad)]
-phi_r_indep = phi_ani_indep[data_array_timeindep[:,0] == int(rad)]
-eta_r_indep = eta_indep[data_array_timeindep[:,0] == int(rad)]
+print(path_array_timedep.shape)
+print(path_array_timeindep.shape)
 
 # print(np.unique(lon_r, return_counts=True))
 # print(np.unique(lon_r_indep, return_counts=True))
@@ -118,155 +115,164 @@ eta_r_indep = eta_indep[data_array_timeindep[:,0] == int(rad)]
 #         eta_r_use_indep.append(eta_r_indep[j])
 
 # print(len(xi_r_use))
+pathlen_dep[pathlen_dep == 0] = np.nan
+pathlen_indep[pathlen_indep == 0] = np.nan
 
+pathlen_diff = np.subtract(pathlen_dep, pathlen_indep)
+tort_diff = np.subtract(tort_dep, tort_indep)
 
-xi_diff = np.subtract(xi_r, xi_r_indep)
-phi_diff = np.subtract(phi_r, phi_r_indep)
-eta_diff = np.subtract(eta_r, eta_r_indep)
-
-print(pathlen_dep.shape, xi_diff.shape)
-
-
-# initialise maps
-m_xi = np.zeros(hp.nside2npix(nside))
-m_phi = np.zeros(hp.nside2npix(nside))
-m_eta = np.zeros(hp.nside2npix(nside))
-
-m_xi[pixel_indices] = xi_diff
-m_phi[pixel_indices] = phi_diff
-m_eta[pixel_indices] = eta_diff
-
-grid_map_xi = m_xi[grid_pix]
-grid_map_phi = m_phi[grid_pix]
-grid_map_eta = m_eta[grid_pix]
+m_pathlen_dep = np.zeros(hp.nside2npix(nside))
+m_pathlen_indep = np.zeros(hp.nside2npix(nside))
 
 
 
-# plot all the maps 
-with PdfPages(f"residual_maps_{slip_system}_scatter.pdf") as pdf:
+m_pathlen = np.zeros(hp.nside2npix(nside))
+m_tort = np.zeros(hp.nside2npix(nside))
 
-    for grid in [[grid_map_xi, 'xi'], [grid_map_phi, 'phi'], [grid_map_eta, 'eta']]:
-            fig = plt.figure(figsize=(13,6))
-            ax = fig.add_subplot(111,projection=ccrs.Robinson(central_longitude=120))
-            # flip longitude to the astro convention
-            image = plt.pcolormesh(longitude, latitude, grid[0],
-                                rasterized=True,
-                                transform=ccrs.PlateCarree())
-
-            # colorbar
-            cax = fig.add_axes([ax.get_position().x1 + 0.025, ax.get_position().y0,0.02, ax.get_position().height])
-            
-            if grid[1] == 'xi':
-                cb = fig.colorbar(image, label = "$\\xi$", cax=cax)
-            elif grid[1] == 'eta':
-                cb = fig.colorbar(image, label = "$\eta$", cax=cax)
-            elif grid[1] == 'phi':
-                cb = fig.colorbar(image, label = "$\phi$", cax=cax)
-
-            ax.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
-
-            gl = ax.gridlines(draw_labels=True, linewidth=0, color='gray', alpha=1, linestyle='--')
-
-            gl.xlabels_top = False
-            gl.ylabels_right = False
-            gl.xlabels_bottom = True
-            gl.ylabels_left = True
-
-            mean_ani = np.mean(grid[0])
-            ani_param = grid[1]
-
-            ax.set_title(f"$\\{ani_param}$ difference between time indep and dep | Radius {rad} km")
-
-            pdf.savefig()
-            plt.close()
-
-    fig1 = plt.figure(figsize=(8,8))
-    ax1 = fig1.add_subplot(131)
-    ax2 = fig1.add_subplot(132)
-    ax3 = fig1.add_subplot(133)
-    
-    
-    ax1.scatter(pathlen_dep, abs(xi_diff))
-    ax1.set_title("$\\xi$")
-    ax2.scatter(pathlen_dep, abs(phi_diff))
-    ax2.set_title("$\phi$")
-    ax3.scatter(pathlen_dep, abs(eta_diff))
-    ax3.set_title("$\eta$")
-
-    ax2.set_title('Pathleng time dependent', fontsize=16)
-
-    # fig1.supxlabel('Path length')
-
-    # fig1.supylabel('Ani parameter')
-    # fig1.suptitle('Time dependent')
-
-    plt.tight_layout()
-    pdf.savefig()
-    plt.close()
-
-    fig2 = plt.figure(figsize=(8,8))
-    ax1 = fig2.add_subplot(131)
-    ax2 = fig2.add_subplot(132)
-    ax3 = fig2.add_subplot(133)  
-    
-    ax1.scatter(pathlen_indep, abs(xi_diff))
-    ax1.set_title("$\\xi$")
-    ax2.scatter(pathlen_indep, abs(phi_diff))
-    ax2.set_title("$\phi$")
-    ax3.scatter(pathlen_indep, abs(eta_diff))
-    ax3.set_title("$\eta$")
-
-    # fig2.supxlabel('Path length')
-    # fig2.supylabel('Ani parameter')
-    # fig2.suptitle('Time independent')
-    ax2.set_title('Pathleng time independent', fontsize=16)
+m_pathlen[pixel_indices] = pathlen_diff
+m_pathlen_dep[pixel_indices] = pathlen_dep
+m_pathlen_indep[pixel_indices] = pathlen_indep
 
 
-    plt.tight_layout()
-    pdf.savefig()
-    plt.close()
+m_tort[pixel_indices] = tort_diff
 
-    fig2 = plt.figure(figsize=(8,8))
-    ax1 = fig2.add_subplot(131)
-    ax2 = fig2.add_subplot(132)
-    ax3 = fig2.add_subplot(133)
-    
-    
-    ax1.scatter(tort_dep, abs(xi_diff))
-    ax1.set_title("$\\xi$")
-    ax2.scatter(tort_dep, abs(phi_diff))
-    ax2.set_title("$\phi$")
-    ax3.scatter(tort_dep, abs(eta_diff))
-    ax3.set_title("$\eta$")
+print(pathlen_indep)
+print(pathlen_indep)
 
-    # fig2.supxlabel('Path length')
-    # fig2.supylabel('Ani parameter')
-    # fig2.suptitle('Time independent')
-    ax2.set_title('Tort', fontsize=16)
-
-    plt.tight_layout()
-    pdf.savefig()
-    plt.close()
-
-    fig2 = plt.figure(figsize=(8,8))
-    ax1 = fig2.add_subplot(131)
-    ax2 = fig2.add_subplot(132)
-    ax3 = fig2.add_subplot(133)
-    
-    
-    ax1.scatter(mean_vel_dep, abs(xi_diff))
-    ax1.set_title("$\\xi$")
-    ax2.scatter(mean_vel_dep, abs(phi_diff))
-    ax2.set_title("$\phi$")
-    ax3.scatter(mean_vel_dep, abs(eta_diff))
-    ax3.set_title("$\eta$")
-
-    # fig2.supxlabel('Path length')
-    # fig2.supylabel('Ani parameter')
-    ax2.set_title('Mean velocity', fontsize=16)
-
-    plt.tight_layout()
-    pdf.savefig()
-    plt.close()
+grid_map_pathlen = m_pathlen[grid_pix]
+grid_map_path_dep = m_pathlen_dep[grid_pix]
+grid_map_path_indep = m_pathlen_indep[grid_pix]
+grid_map_tort = m_tort[grid_pix]
 
 
+# # plot all the maps 
+# with PdfPages(f"path_residual_maps.pdf") as pdf:
+cmap = matplotlib.cm.get_cmap('inferno')
+cmap.set_bad(color='dimgray')
+
+fig = plt.figure(figsize=(10,13))
+ax = fig.add_subplot(311,projection=ccrs.Robinson(central_longitude=120))
+ax2 = fig.add_subplot(312,projection=ccrs.Robinson(central_longitude=120))
+ax3 = fig.add_subplot(313,projection=ccrs.Robinson(central_longitude=120))
+
+
+image = ax.pcolormesh(longitude, latitude, grid_map_path_indep,
+                        rasterized=True,
+                        transform=ccrs.PlateCarree(), 
+                        cmap=cmap)
+
+image = ax.pcolormesh(longitude, latitude, grid_map_path_indep,
+                        rasterized=True,
+                        transform=ccrs.PlateCarree(), 
+                        cmap='inferno', vmin=VMIN, vmax=VMAX)
+
+plt.colorbar(image, label = "Pathlength (km)", ax=ax)
+
+ax.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+
+gl = ax.gridlines(draw_labels=True, linewidth=0)
+
+gl.top_label = True
+gl.right_label = True
+gl.bottom_label = True
+gl.left_label = True
+
+ax.set_title(f"Pathlength Time Constant Flowfield")
+
+
+image = ax2.pcolormesh(longitude, latitude, grid_map_path_dep,
+                        rasterized=True,
+                        transform=ccrs.PlateCarree(), 
+                        cmap=cmap)
+
+image = ax2.pcolormesh(longitude, latitude, grid_map_path_dep,
+                        rasterized=True,
+                        transform=ccrs.PlateCarree(), 
+                        cmap='inferno', vmin=VMIN, vmax=VMAX)
+
+plt.colorbar(image, label = "Pathlength (km)", ax=ax2)
+
+ax2.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+
+gl = ax2.gridlines(draw_labels=True, linewidth=0)
+
+gl.top_label = True
+gl.right_label = True
+gl.bottom_label = True
+gl.left_label = True
+
+ax2.set_title(f"Pathlength Time Varying Flowfield")
+
+
+
+
+
+
+# pdf.savefig()
+# flip longitude to the astro convention
+image = ax3.pcolormesh(longitude, latitude, grid_map_pathlen,
+                        rasterized=True,
+                        transform=ccrs.PlateCarree(), 
+                        norm=colors.CenteredNorm(),
+                        cmap=cmap)
+
+image = ax3.pcolormesh(longitude, latitude, grid_map_pathlen,
+                        rasterized=True,
+                        transform=ccrs.PlateCarree(), 
+                        norm=colors.CenteredNorm(),
+                        cmap='seismic')
+
+plt.colorbar(image, label = "$\delta$Pathlength (km)", ax=ax3)
+
+ax3.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+
+gl = ax3.gridlines(draw_labels=True, linewidth=0)
+
+gl.top_label = True
+gl.right_label = True
+gl.bottom_label = True
+gl.left_label = True
+
+ax3.set_title(f"$\delta$Pathlength")
+
+plt.tight_layout(pad = 0.5)
+ax.text(0.0, 0.94, 'a)', transform=ax.transAxes,
+        size=20)
+
+ax2.text(0.0, 0.94, 'b)', transform=ax2.transAxes,
+size=20)
+
+ax3.text(0.0, 0.94, 'c)', transform=ax3.transAxes,
+size=20)
+
+
+plt.savefig('pathlength_summary.pdf')
+plt.show()
+plt.close()
+
+# print('tort difference')
+# fig = plt.figure(figsize=(13,6))
+# ax = fig.add_subplot(111,projection=ccrs.Robinson(central_longitude=120))
+
+# # flip longitude to the astro convention
+# image = ax.pcolormesh(longitude, latitude, grid_map_tort,
+#                         rasterized=True,
+#                         transform=ccrs.PlateCarree(),
+#                         vmin = grid_map_tort.min(), vmax = grid_map_tort.max(),
+#                         cmap='inferno')
+
+# plt.colorbar(image, label = "$\delta path tort (km)$", ax=ax)
+
+# ax.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+
+# gl = ax.gridlines(draw_labels=True, linewidth=0)
+
+# gl.top_label = True
+# gl.right_label = True
+# gl.bottom_label = True
+# gl.left_label = True
+
+# ax.set_title(f"Path tortuosity difference between time dep and indep | Radius {rad} km")
+
+# # pdf.savefig()
+# plt.close()
