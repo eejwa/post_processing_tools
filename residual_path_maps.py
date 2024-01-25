@@ -118,12 +118,18 @@ print(path_array_timeindep.shape)
 pathlen_dep[pathlen_dep == 0] = np.nan
 pathlen_indep[pathlen_indep == 0] = np.nan
 
+
+tort_dep[tort_dep == 0] = np.nan
+tort_indep[tort_indep == 0] = np.nan
+
 pathlen_diff = np.subtract(pathlen_dep, pathlen_indep)
 tort_diff = np.subtract(tort_dep, tort_indep)
 
 m_pathlen_dep = np.zeros(hp.nside2npix(nside))
 m_pathlen_indep = np.zeros(hp.nside2npix(nside))
 
+m_tort_dep = np.zeros(hp.nside2npix(nside))
+m_tort_indep = np.zeros(hp.nside2npix(nside))
 
 
 m_pathlen = np.zeros(hp.nside2npix(nside))
@@ -135,6 +141,9 @@ m_pathlen_indep[pixel_indices] = pathlen_indep
 
 
 m_tort[pixel_indices] = tort_diff
+m_tort_dep[pixel_indices] = tort_dep
+m_tort_indep[pixel_indices] = tort_indep
+
 
 print(pathlen_indep)
 print(pathlen_indep)
@@ -143,11 +152,116 @@ grid_map_pathlen = m_pathlen[grid_pix]
 grid_map_path_dep = m_pathlen_dep[grid_pix]
 grid_map_path_indep = m_pathlen_indep[grid_pix]
 grid_map_tort = m_tort[grid_pix]
-
+grid_map_tort_dep = m_tort_dep[grid_pix]
+grid_map_tort_indep = m_tort_indep[grid_pix]
 
 # # plot all the maps 
 # with PdfPages(f"path_residual_maps.pdf") as pdf:
-cmap = matplotlib.cm.get_cmap('inferno')
+# cmap = matplotlib.cm.get_cmap('inferno')
+# cmap.set_bad(color='dimgray')
+
+# fig = plt.figure(figsize=(10,13))
+# ax = fig.add_subplot(311,projection=ccrs.Robinson(central_longitude=120))
+# ax2 = fig.add_subplot(312,projection=ccrs.Robinson(central_longitude=120))
+# ax3 = fig.add_subplot(313,projection=ccrs.Robinson(central_longitude=120))
+
+
+# image = ax.pcolormesh(longitude, latitude, grid_map_path_indep,
+#                         rasterized=True,
+#                         transform=ccrs.PlateCarree(), 
+#                         cmap=cmap)
+
+# image = ax.pcolormesh(longitude, latitude, grid_map_path_indep,
+#                         rasterized=True,
+#                         transform=ccrs.PlateCarree(), 
+#                         cmap='inferno', vmin=VMIN, vmax=VMAX)
+
+# plt.colorbar(image, label = "Pathlength (km)", ax=ax)
+
+# ax.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+
+# gl = ax.gridlines(draw_labels=True, linewidth=0)
+
+# gl.top_label = True
+# gl.right_label = True
+# gl.bottom_label = True
+# gl.left_label = True
+
+# ax.set_title(f"Pathlength Time Constant Flowfield")
+
+
+# image = ax2.pcolormesh(longitude, latitude, grid_map_path_dep,
+#                         rasterized=True,
+#                         transform=ccrs.PlateCarree(), 
+#                         cmap=cmap)
+
+# image = ax2.pcolormesh(longitude, latitude, grid_map_path_dep,
+#                         rasterized=True,
+#                         transform=ccrs.PlateCarree(), 
+#                         cmap='inferno', vmin=VMIN, vmax=VMAX)
+
+# plt.colorbar(image, label = "Pathlength (km)", ax=ax2)
+
+# ax2.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+
+# gl = ax2.gridlines(draw_labels=True, linewidth=0)
+
+# gl.top_label = True
+# gl.right_label = True
+# gl.bottom_label = True
+# gl.left_label = True
+
+# ax2.set_title(f"Pathlength Time Varying Flowfield")
+
+
+
+
+
+
+# # pdf.savefig()
+# # flip longitude to the astro convention
+# image = ax3.pcolormesh(longitude, latitude, grid_map_pathlen,
+#                         rasterized=True,
+#                         transform=ccrs.PlateCarree(), 
+#                         norm=colors.CenteredNorm(),
+#                         cmap=cmap)
+
+# image = ax3.pcolormesh(longitude, latitude, grid_map_pathlen,
+#                         rasterized=True,
+#                         transform=ccrs.PlateCarree(), 
+#                         norm=colors.CenteredNorm(),
+#                         cmap='seismic')
+
+# plt.colorbar(image, label = "$\delta$Pathlength (km)", ax=ax3)
+
+# ax3.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+
+# gl = ax3.gridlines(draw_labels=True, linewidth=0)
+
+# gl.top_label = True
+# gl.right_label = True
+# gl.bottom_label = True
+# gl.left_label = True
+
+# ax3.set_title(f"$\delta$Pathlength")
+
+# plt.tight_layout(pad = 0.5)
+# ax.text(0.0, 0.94, 'a)', transform=ax.transAxes,
+#         size=20)
+
+# ax2.text(0.0, 0.94, 'b)', transform=ax2.transAxes,
+# size=20)
+
+# ax3.text(0.0, 0.94, 'c)', transform=ax3.transAxes,
+# size=20)
+
+
+# plt.savefig('pathlength_summary.pdf')
+# plt.show()
+# plt.close()
+
+# print('tort difference')
+cmap = matplotlib.cm.get_cmap('YlOrRd')
 cmap.set_bad(color='dimgray')
 
 fig = plt.figure(figsize=(10,13))
@@ -156,17 +270,17 @@ ax2 = fig.add_subplot(312,projection=ccrs.Robinson(central_longitude=120))
 ax3 = fig.add_subplot(313,projection=ccrs.Robinson(central_longitude=120))
 
 
-image = ax.pcolormesh(longitude, latitude, grid_map_path_indep,
+image = ax.pcolormesh(longitude, latitude, grid_map_tort_indep,
                         rasterized=True,
                         transform=ccrs.PlateCarree(), 
                         cmap=cmap)
 
-image = ax.pcolormesh(longitude, latitude, grid_map_path_indep,
+image = ax.pcolormesh(longitude, latitude, grid_map_tort_indep,
                         rasterized=True,
                         transform=ccrs.PlateCarree(), 
-                        cmap='inferno', vmin=VMIN, vmax=VMAX)
+                        cmap='inferno', vmin=1, vmax=1.5)
 
-plt.colorbar(image, label = "Pathlength (km)", ax=ax)
+plt.colorbar(image, label = "Tortuosity", ax=ax)
 
 ax.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
 
@@ -177,20 +291,20 @@ gl.right_label = True
 gl.bottom_label = True
 gl.left_label = True
 
-ax.set_title(f"Pathlength Time Constant Flowfield")
+ax.set_title(f"Tortuosity Time Constant Flowfield")
 
 
-image = ax2.pcolormesh(longitude, latitude, grid_map_path_dep,
+image = ax2.pcolormesh(longitude, latitude, grid_map_tort_dep,
                         rasterized=True,
                         transform=ccrs.PlateCarree(), 
                         cmap=cmap)
 
-image = ax2.pcolormesh(longitude, latitude, grid_map_path_dep,
+image = ax2.pcolormesh(longitude, latitude, grid_map_tort_dep,
                         rasterized=True,
                         transform=ccrs.PlateCarree(), 
-                        cmap='inferno', vmin=VMIN, vmax=VMAX)
+                        cmap='inferno', vmin=1, vmax=1.5)
 
-plt.colorbar(image, label = "Pathlength (km)", ax=ax2)
+plt.colorbar(image, label = "Tortuosity", ax=ax2)
 
 ax2.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
 
@@ -201,7 +315,7 @@ gl.right_label = True
 gl.bottom_label = True
 gl.left_label = True
 
-ax2.set_title(f"Pathlength Time Varying Flowfield")
+ax2.set_title(f"Tortuosity Time Varying Flowfield")
 
 
 
@@ -210,19 +324,19 @@ ax2.set_title(f"Pathlength Time Varying Flowfield")
 
 # pdf.savefig()
 # flip longitude to the astro convention
-image = ax3.pcolormesh(longitude, latitude, grid_map_pathlen,
+image = ax3.pcolormesh(longitude, latitude, grid_map_tort,
                         rasterized=True,
                         transform=ccrs.PlateCarree(), 
                         norm=colors.CenteredNorm(),
                         cmap=cmap)
 
-image = ax3.pcolormesh(longitude, latitude, grid_map_pathlen,
+image = ax3.pcolormesh(longitude, latitude, grid_map_tort,
                         rasterized=True,
                         transform=ccrs.PlateCarree(), 
-                        norm=colors.CenteredNorm(),
-                        cmap='seismic')
+                        # norm=colors.CenteredNorm(),
+                        cmap='seismic', vmin = -1.5, vmax=1.5)
 
-plt.colorbar(image, label = "$\delta$Pathlength (km)", ax=ax3)
+plt.colorbar(image, label = "$\delta$Tortuosity (km)", ax=ax3)
 
 ax3.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
 
@@ -233,7 +347,7 @@ gl.right_label = True
 gl.bottom_label = True
 gl.left_label = True
 
-ax3.set_title(f"$\delta$Pathlength")
+ax3.set_title(f"$\delta$Tortuosity")
 
 plt.tight_layout(pad = 0.5)
 ax.text(0.0, 0.94, 'a)', transform=ax.transAxes,
@@ -246,33 +360,6 @@ ax3.text(0.0, 0.94, 'c)', transform=ax3.transAxes,
 size=20)
 
 
-plt.savefig('pathlength_summary.pdf')
+plt.savefig('tort_summary.pdf')
 plt.show()
 plt.close()
-
-# print('tort difference')
-# fig = plt.figure(figsize=(13,6))
-# ax = fig.add_subplot(111,projection=ccrs.Robinson(central_longitude=120))
-
-# # flip longitude to the astro convention
-# image = ax.pcolormesh(longitude, latitude, grid_map_tort,
-#                         rasterized=True,
-#                         transform=ccrs.PlateCarree(),
-#                         vmin = grid_map_tort.min(), vmax = grid_map_tort.max(),
-#                         cmap='inferno')
-
-# plt.colorbar(image, label = "$\delta path tort (km)$", ax=ax)
-
-# ax.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
-
-# gl = ax.gridlines(draw_labels=True, linewidth=0)
-
-# gl.top_label = True
-# gl.right_label = True
-# gl.bottom_label = True
-# gl.left_label = True
-
-# ax.set_title(f"Path tortuosity difference between time dep and indep | Radius {rad} km")
-
-# # pdf.savefig()
-# plt.close()
