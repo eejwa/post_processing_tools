@@ -88,6 +88,10 @@ outfile = open(outfilename, 'w')
 outfile.write('rad lat lon tensor_diff slip_system\n')
 
 
+au_info_file = f'au_info_{ss}.txt'
+au_outfile = open(au_info_file, 'w')
+au_outfile.write('rad lat lon au slip_system time_criteria\n')
+
 for pathfile in glob.glob(str(path_dir_dep)+'_L_*'+ss+'*'):
     print(pathfile)
     pathfile_indep = path_dir_indep + pathfile.split('/')[-1]
@@ -107,11 +111,14 @@ for pathfile in glob.glob(str(path_dir_dep)+'_L_*'+ss+'*'):
     cij_no_iso_dep = cij_dep - iso_dep
     cij_no_iso_indep = cij_indep - iso_indep
 
+    cij_no_iso_dep = np.triu(cij_no_iso_dep)
+    cij_no_iso_indep = np.triu(cij_no_iso_indep)
+
     print(cij_dep)
     print(cij_indep)
 
-    # au_dep = calc_uni_ani_index(cij_dep)
-    # au_indep = calc_uni_ani_index(cij_indep)
+    au_dep = calc_uni_ani_index(cij_dep)
+    au_indep = calc_uni_ani_index(cij_indep)
 
     diff = np.sqrt(np.sum((cij_no_iso_dep - cij_no_iso_indep)**2))
     # diff = au_dep - au_indep
@@ -139,7 +146,8 @@ for pathfile in glob.glob(str(path_dir_dep)+'_L_*'+ss+'*'):
     lats.append(lat)
     
     outfile.write(f'{rad} {lat} {lon} {diff} {ss}\n')
-
+    au_outfile.write(f'{rad} {lat} {lon} {au_indep} {ss} time-constant \n')
+    au_outfile.write(f'{rad} {lat} {lon} {au_dep} {ss} time-varying \n')
 
 
 
@@ -166,35 +174,182 @@ grid_map_dist[grid_map_dist == 0] = np.nan
 cmap = matplotlib.cm.get_cmap('gist_heat_r')
 cmap.set_bad(color='dimgray')
 
-fig = plt.figure(figsize=(13,6))
-ax = fig.add_subplot(111,projection=ccrs.Robinson(central_longitude=120))
+# fig = plt.figure(figsize=(13,6))
+# ax = fig.add_subplot(111,projection=ccrs.Robinson(central_longitude=120))
 
-# flip longitude to the astro convention
+# # flip longitude to the astro convention
 
-image = ax.pcolormesh(longitude, latitude, grid_map_dist,
-                        rasterized=True,
-                        transform=ccrs.PlateCarree(),
-                        cmap=cmap)
+# image = ax.pcolormesh(longitude, latitude, grid_map_dist,
+#                         rasterized=True,
+#                         transform=ccrs.PlateCarree(),
+#                         cmap=cmap)
 
-image = ax.pcolormesh(longitude, latitude, grid_map_dist,
-                        rasterized=True,
-                        transform=ccrs.PlateCarree(),
-                        cmap='gist_heat_r')
+# image = ax.pcolormesh(longitude, latitude, grid_map_dist,
+#                         rasterized=True,
+#                         transform=ccrs.PlateCarree(),
+#                         cmap='gist_heat_r')
 
-plt.colorbar(image, label = "Misfit (GPa)", ax=ax)
+# plt.colorbar(image, label = "Misfit (GPa)", ax=ax)
 
-ax.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+# ax.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
 
-gl = ax.gridlines(draw_labels=True, linewidth=0)
+# gl = ax.gridlines(draw_labels=True, linewidth=0)
 
-gl.top_label = True
-gl.right_label = True
-gl.bottom_label = True
-gl.left_label = True
+# gl.top_label = True
+# gl.right_label = True
+# gl.bottom_label = True
+# gl.left_label = True
 
-ax.set_title(f"Misfit between elastic tensors")
-fig.tight_layout(pad=0.5)
-plt.savefig(f'misfit_difference_map_{ss}.pdf')
+# ax.set_title(f"Misfit between elastic tensors")
+# fig.tight_layout(pad=0.5)
+# plt.savefig(f'misfit_difference_map_{ss}.pdf')
+# plt.show()
+# plt.close()
+
+
+
+
+# do for all slip systems 
+
+titles = {'001_1-3' : 'Hard', '001_1-5' : 'Medium','001_1-10' : 'Easy'}
+
+
+cmap = matplotlib.cm.get_cmap('gist_heat_r')
+cmap.set_bad(color='dimgray')
+
+fig = plt.figure(figsize=(10,13))
+ax1 = fig.add_subplot(311,projection=ccrs.Robinson(central_longitude=120))
+ax2 = fig.add_subplot(312,projection=ccrs.Robinson(central_longitude=120))
+ax3 = fig.add_subplot(313,projection=ccrs.Robinson(central_longitude=120))
+
+axs = [ax1, ax2, ax3]
+
+
+for s,ss in enumerate(['001_1-3', '001_1-5', '001_1-10']):
+    ax = axs[s]
+
+    lats = []
+    lons = []
+    diffs = []
+    ss_name = ss.split('_')[1]
+    outfilename = f'l2_tensor_diff_{ss_name}.txt'
+
+    outfile = open(outfilename, 'w')
+    outfile.write('rad lat lon tensor_diff slip_system\n')
+
+
+    for pathfile in glob.glob(str(path_dir_dep)+'_L_*'+ss+'*'):
+        print(pathfile)
+        pathfile_indep = path_dir_indep + pathfile.split('/')[-1]
+        lat = float(os.path.basename(pathfile).split('_')[3])
+        lon = float(os.path.basename(pathfile).split('_')[4])
+        rad = float(os.path.basename(pathfile).split('_')[2])
+
+        cij_dep = read_cij_file(pathfile + '/avg_cij')
+        cij_indep = read_cij_file(pathfile_indep + '/avg_cij')
+
+        cij_decomp_dep = read_cij_file(pathfile + '/avg_cij')
+        cij_decomp_indep = read_cij_file(pathfile_indep + '/avg_cij')
+
+        iso_dep = bc_decomp(cij_decomp_dep)[0]
+        iso_indep = bc_decomp(cij_decomp_indep)[0]
+
+        cij_no_iso_dep = cij_dep - iso_dep
+        cij_no_iso_indep = cij_indep - iso_indep
+
+        cij_no_iso_dep = np.triu(cij_no_iso_dep)
+        cij_no_iso_indep = np.triu(cij_no_iso_indep)
+
+        print(cij_dep)
+        print(cij_indep)
+
+        print(cij_no_iso_indep)
+        print(cij_no_iso_dep)
+
+        au_dep = calc_uni_ani_index(cij_dep)
+        au_indep = calc_uni_ani_index(cij_indep)
+
+        diff = np.sqrt(np.sum((cij_no_iso_dep - cij_no_iso_indep)**2))
+        # diff = au_dep - au_indep
+
+        # print('cij')
+        # print(cij_dep)
+        # print('iso')
+        # print(iso_dep)
+        # print('cij - iso')
+        # print(cij_no_iso_dep)
+        
+
+        # print('cij')
+        # print(cij_indep)
+        # print('iso')
+        # print(iso_indep)
+        # print('cij - iso')
+        # print(cij_no_iso_indep)
+
+        print(diff)
+        
+
+        diffs.append(diff)
+        lons.append(lon)
+        lats.append(lat)
+        outfile.write(f'{rad} {lat} {lon} {diff} {ss}\n')
+
+
+    lats = np.array(lats)
+    lons = np.array(lons)
+    diffs = np.array(diffs)
+    colat_rad = np.radians(90 - lats)
+    lon_rad = np.radians(lons)
+
+    pixel_indices = hp.ang2pix(nside, colat_rad, lon_rad)
+
+    m_diff = np.zeros(hp.nside2npix(nside))
+    m_diff[pixel_indices] = diffs
+
+    grid_map_diff = m_diff[grid_pix]
+
+
+    grid_map_diff[grid_map_diff == 0] = np.nan
+
+
+    # flip longitude to the astro convention
+
+    image = ax.pcolormesh(longitude, latitude, grid_map_diff,
+                            rasterized=True,
+                            transform=ccrs.PlateCarree(),
+                            cmap=cmap)
+
+    image = ax.pcolormesh(longitude, latitude, grid_map_diff,
+                            rasterized=True,
+                            transform=ccrs.PlateCarree(),
+                            cmap='gist_heat_r', vmin=0, vmax=450)
+
+    plt.colorbar(image, label = "Misfit (GPa)", ax=ax)
+
+    ax.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+
+    gl = ax.gridlines(draw_labels=True, linewidth=0)
+
+    gl.top_label = True
+    gl.right_label = True
+    gl.bottom_label = True
+    gl.left_label = True
+
+    ax.set_title(titles[ss])
+
+fig.tight_layout(pad=1)
+
+ax1.text(0.0, 0.94, 'a)', transform=ax1.transAxes,
+        size=20)
+
+ax2.text(0.0, 0.94, 'b)', transform=ax2.transAxes,
+size=20)
+
+ax3.text(0.0, 0.94, 'c)', transform=ax3.transAxes,
+size=20)
+
+plt.savefig(f'misfit_difference_map_all_ss.pdf')
 plt.show()
 plt.close()
 
