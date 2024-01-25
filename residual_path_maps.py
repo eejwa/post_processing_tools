@@ -145,15 +145,18 @@ m_tort_dep[pixel_indices] = tort_dep
 m_tort_indep[pixel_indices] = tort_indep
 
 
+
 print(pathlen_indep)
 print(pathlen_indep)
 
 grid_map_pathlen = m_pathlen[grid_pix]
 grid_map_path_dep = m_pathlen_dep[grid_pix]
 grid_map_path_indep = m_pathlen_indep[grid_pix]
+
 grid_map_tort = m_tort[grid_pix]
 grid_map_tort_dep = m_tort_dep[grid_pix]
 grid_map_tort_indep = m_tort_indep[grid_pix]
+
 
 # # plot all the maps 
 # with PdfPages(f"path_residual_maps.pdf") as pdf:
@@ -348,6 +351,107 @@ gl.bottom_label = True
 gl.left_label = True
 
 ax3.set_title(f"$\delta$Tortuosity")
+
+plt.tight_layout(pad = 0.5)
+ax.text(0.0, 0.94, 'a)', transform=ax.transAxes,
+        size=20)
+
+ax2.text(0.0, 0.94, 'b)', transform=ax2.transAxes,
+size=20)
+
+ax3.text(0.0, 0.94, 'c)', transform=ax3.transAxes,
+size=20)
+
+
+plt.savefig('tort_summary.pdf')
+plt.show()
+plt.close()
+
+# print('tort difference')
+fig = plt.figure(figsize=(10,13))
+ax = fig.add_subplot(311,projection=ccrs.Robinson(central_longitude=120))
+ax2 = fig.add_subplot(312,projection=ccrs.Robinson(central_longitude=120))
+ax3 = fig.add_subplot(313,projection=ccrs.Robinson(central_longitude=120))
+
+
+image = ax.pcolormesh(longitude, latitude, grid_map_tort_indep,
+                        rasterized=True,
+                        transform=ccrs.PlateCarree(), 
+                        cmap=cmap)
+
+image = ax.pcolormesh(longitude, latitude, grid_map_tort_indep,
+                        rasterized=True,
+                        transform=ccrs.PlateCarree(), 
+                        cmap='inferno')
+
+plt.colorbar(image, label = "Tortuosity", ax=ax)
+
+ax.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+
+gl = ax.gridlines(draw_labels=True, linewidth=0)
+
+gl.top_label = True
+gl.right_label = True
+gl.bottom_label = True
+gl.left_label = True
+
+ax.set_title(f"Tortuosity Time Constant Flowfield")
+
+
+image = ax2.pcolormesh(longitude, latitude, grid_map_tort_dep,
+                        rasterized=True,
+                        transform=ccrs.PlateCarree(), 
+                        cmap=cmap)
+
+image = ax2.pcolormesh(longitude, latitude, grid_map_tort_dep,
+                        rasterized=True,
+                        transform=ccrs.PlateCarree(), 
+                        cmap='inferno')
+
+plt.colorbar(image, label = "Tortuosity", ax=ax2)
+
+ax2.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+
+gl = ax2.gridlines(draw_labels=True, linewidth=0)
+
+gl.top_label = True
+gl.right_label = True
+gl.bottom_label = True
+gl.left_label = True
+
+ax2.set_title(f"Tortuosity Time Varying Flowfield")
+
+
+
+
+
+
+# pdf.savefig()
+# flip longitude to the astro convention
+image = ax3.pcolormesh(longitude, latitude, grid_map_tort,
+                        rasterized=True,
+                        transform=ccrs.PlateCarree(), 
+                        norm=colors.CenteredNorm(),
+                        cmap=cmap)
+
+image = ax3.pcolormesh(longitude, latitude, grid_map_tort,
+                        rasterized=True,
+                        transform=ccrs.PlateCarree(), 
+                        norm=colors.CenteredNorm(),
+                        cmap='seismic')
+
+plt.colorbar(image, label = "$\delta$ tortuosity (km)", ax=ax3)
+
+ax3.coastlines(zorder=2, resolution='50m', color='black', linewidth=1, alpha=1)
+
+gl = ax3.gridlines(draw_labels=True, linewidth=0)
+
+gl.top_label = True
+gl.right_label = True
+gl.bottom_label = True
+gl.left_label = True
+
+ax3.set_title(f"$\delta$ tortuosity")
 
 plt.tight_layout(pad = 0.5)
 ax.text(0.0, 0.94, 'a)', transform=ax.transAxes,
